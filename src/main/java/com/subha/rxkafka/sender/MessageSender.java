@@ -17,8 +17,9 @@ import java.util.Map;
  */
 public class MessageSender {
     public static void main(String[] args) {
-        Map<String, Object> producerProps = new HashMap<String, Object>();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:2181");
+
+        Map<String, Object> producerProps = new HashMap<>();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
@@ -28,8 +29,19 @@ public class MessageSender {
 
         Sender<Integer, String> sender = Sender.create(senderOptions);
 
+
         Flux<SenderRecord<Integer, String, Integer>> outboundFlux =
-                Flux.range(1, 10)
-                        .map(i -> SenderRecord.create(new ProducerRecord<Object, Object>("demo-topic", i, "Message_" + i), i);
+                Flux.range(1, 30)
+                        .map(i -> SenderRecord.<Integer, String, Integer>create(
+                                new ProducerRecord<Integer, String>("demo-topic",i, "Message"+i), i));
+
+
+        sender.send(outboundFlux, false)
+                .doOnError(Throwable::printStackTrace)
+                .doOnNext(integerSenderResult -> System.out.println(
+                        integerSenderResult.recordMetadata()+"---"+integerSenderResult.correlationMetadata()))
+                .subscribe();
+               // .dispose();
+
     }
 }
