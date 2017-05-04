@@ -5,13 +5,13 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import reactor.kafka.sender.Sender;
 import reactor.kafka.sender.SenderOptions;
 import reactor.kafka.sender.SenderRecord;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by user on 5/3/2017.
@@ -35,18 +35,19 @@ public class MessageSender {
                         .map(i -> SenderRecord.<Integer, String, Integer>create(
                                 new ProducerRecord<Integer, String>("demo-topic",i, "Message"+i), i));
 
-        CountDownLatch countDownLatch = new CountDownLatch(9);
+       // CountDownLatch countDownLatch = new CountDownLatch(9);
 
         sender.send(outboundFlux, false)
+                .publishOn(Schedulers.newParallel("demotopicScheduler"))
                 .doOnError(Throwable::printStackTrace)
                 .doOnNext(integerSenderResult -> System.out.println(
                         integerSenderResult.recordMetadata()+"---"+integerSenderResult.correlationMetadata()))
                 .subscribe(integerSenderResult -> {
-                    countDownLatch.countDown();
+                    /*countDownLatch.countDown();*/
                 });
                // .dispose();
 
-        countDownLatch.await();
+        //countDownLatch.await();
 
     }
 }
