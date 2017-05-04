@@ -11,12 +11,13 @@ import reactor.kafka.sender.SenderRecord;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by user on 5/3/2017.
  */
 public class MessageSender {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         Map<String, Object> producerProps = new HashMap<>();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -29,19 +30,23 @@ public class MessageSender {
 
         Sender<Integer, String> sender = Sender.create(senderOptions);
 
-
         Flux<SenderRecord<Integer, String, Integer>> outboundFlux =
-                Flux.range(1, 30)
+                Flux.range(1, 9)
                         .map(i -> SenderRecord.<Integer, String, Integer>create(
                                 new ProducerRecord<Integer, String>("demo-topic",i, "Message"+i), i));
 
+        CountDownLatch countDownLatch = new CountDownLatch(9);
 
         sender.send(outboundFlux, false)
                 .doOnError(Throwable::printStackTrace)
                 .doOnNext(integerSenderResult -> System.out.println(
                         integerSenderResult.recordMetadata()+"---"+integerSenderResult.correlationMetadata()))
-                .subscribe();
+                .subscribe(integerSenderResult -> {
+                    countDownLatch.countDown();
+                });
                // .dispose();
+
+        countDownLatch.await();
 
     }
 }
