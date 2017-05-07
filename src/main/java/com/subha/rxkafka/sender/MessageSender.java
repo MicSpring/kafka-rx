@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 public class MessageSender {
     public static void main(String[] args) throws InterruptedException {
 
+
         Map<String, Object> producerProps = new HashMap<>();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
