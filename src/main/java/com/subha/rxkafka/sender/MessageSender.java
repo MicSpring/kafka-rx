@@ -15,6 +15,7 @@ import reactor.kafka.sender.SenderResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -42,26 +43,33 @@ public class MessageSender {
 
        // CountDownLatch countDownLatch = new CountDownLatch(9);
 
-      sender.send(outboundFlux, true)
-               // .publishOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
-                .doOnError(Throwable::printStackTrace)
-                .doOnNext(integerSenderResult -> System.out.println(
-                        integerSenderResult.recordMetadata()+"---"+integerSenderResult.correlationMetadata()))
-               .doOnComplete(() -> System.out.println("Done"))
-              .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
-                .subscribe(new Subscriber<SenderResult<Integer>>() {
+        ExecutorService executorService1 = Executors.newSingleThreadExecutor();
+        ExecutorService executorService2 = Executors.newCachedThreadPool();
 
-                    Subscription subscription = null;
+
+      sender.send(outboundFlux, true)
+              //.subscribeOn(Schedulers.fromExecutor(executorService2))
+              //  .publishOn(Schedulers.fromExecutor(executorService2))
+
+              .doOnNext(integerSenderResult -> System.out.println(" Do On Next:"+
+                      integerSenderResult.recordMetadata()+"---"+integerSenderResult.correlationMetadata()+" For:"+Thread.currentThread()))
+              .doOnError(Throwable::printStackTrace)
+               .doOnComplete(() -> System.out.println("Done"+ " For:"+Thread.currentThread()))
+             // .publishOn(Schedulers.fromExecutor(executorService2))
+                 .doOnNext(integerSenderResult -> System.out.println("Logging:"+integerSenderResult+" For:"+Thread.currentThread()))
+                .subscribeOn(Schedulers.fromExecutor(executorService2))
+             // .publishOn(Schedulers.fromExecutor(executorService2))
+                .subscribe(new Subscriber<SenderResult<Integer>>() {
 
                     @Override
                     public void onSubscribe(Subscription s) {
                         System.out.println("The Subscription is:"+s+" For:"+Thread.currentThread());
-                        subscription = s;
+                        s.request(Long.MAX_VALUE);
                     }
 
                     @Override
                     public void onNext(SenderResult<Integer> integerSenderResult) {
-                        System.out.println(integerSenderResult+" For:"+Thread.currentThread());
+                        System.out.println("On NEXT: "+integerSenderResult+" For:"+Thread.currentThread());
                     }
 
                     @Override
@@ -72,15 +80,14 @@ public class MessageSender {
                     @Override
                     public void onComplete() {
                         System.out.println("All Records Sent"+" For:"+Thread.currentThread());
-                        //sender.close();
-                        //subscription.cancel();
-
+                        executorService2.shutdown();
+                        //executorService1.shutdown();
                     }
                 });
 
 
         System.out.println(" For:"+Thread.currentThread());
-
+       // TimeUnit.SECONDS.sleep(3000L);
         //countDownLatch.await();
 
     }

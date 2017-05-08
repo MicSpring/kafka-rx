@@ -1,6 +1,7 @@
 package com.subha.rxkafka.receiver;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import reactor.kafka.receiver.Receiver;
@@ -25,14 +26,24 @@ public class MessgeReceiver {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         ReceiverOptions<Integer, String> receiverOptions = ReceiverOptions.<Integer, String>create(props)
-                                                            .subscription(Collections.singleton("demo-topic"));
+                                                            .subscription(Collections.singleton("demo-topic"))
+                                                            .assignment(Collections.singleton(new TopicPartition("demo-topic",0)))
+                                                            .addAssignListener(receiverPartitions -> receiverPartitions.forEach(
+                                                                    receiverPartition -> {
+                                                                        System.out.println(receiverPartition);
+                                                                        receiverPartition.seekToEnd();}
+                                                            ))
+                                                            .addRevokeListener(receiverPartitions ->
+                                                            receiverPartitions.forEach(receiverPartition ->
+                                                                System.out.println(receiverPartition+"--"+receiverPartition.topicPartition())));
 
 
         Receiver.<Integer,String>create(receiverOptions)
                 .receive()
                 .subscribe(record -> {
-                    System.out.println(record);
-                    record.offset().acknowledge();
+                    System.out.println(record.record()+"==="+record.offset());
+                   record.offset().acknowledge();
+                    record.offset().commit();
                 });
     }
 }
