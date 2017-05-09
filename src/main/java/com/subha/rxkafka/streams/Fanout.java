@@ -29,6 +29,5 @@ public class Fanout {
 
         blockingSinkFlux.subscribe(s -> System.out.println(s));
 
-
     }
 }
