@@ -1,4 +1,4 @@
-package com.subha.rxkafka.receiver;
+package com.subha.lambdastreams.rxkafka.receiver;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;

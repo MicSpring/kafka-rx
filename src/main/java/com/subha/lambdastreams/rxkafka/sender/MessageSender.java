@@ -1,4 +1,4 @@
-package com.subha.rxkafka.sender;
+package com.subha.lambdastreams.rxkafka.sender;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;

@@ -1,4 +1,4 @@
-package com.subha.rxkafka.streams;
+package com.subha.lambdastreams.rxkafka.streams;
 
 import reactor.core.publisher.BlockingSink;
 import reactor.core.publisher.EmitterProcessor;
@@ -13,10 +13,11 @@ public class Fanout {
        EmitterProcessor<String> emitterProcessor = EmitterProcessor.create();
         BlockingSink<String> blockingSink = emitterProcessor.connectSink();
 
-        emitterProcessor.subscribe(s -> System.out.println("Fine for:"+s));
         emitterProcessor.onNext("i AM fINEEE");
+        emitterProcessor.subscribe(s -> System.out.println("Fine for:"+s));
+       // emitterProcessor.onNext("i AM fINEEE");
 
-        emitterProcessor.subscribe(s -> System.out.println(s));
+        emitterProcessor.subscribe(s -> System.out.println("Hmmm:"+s));
 
        Flux<BlockingSink.Emission> blockingSinkFlux =
                Flux.<Integer>range(1,3).map(integer -> blockingSink.emit(String.valueOf(integer)));
